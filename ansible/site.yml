@@ -1,0 +1,12 @@
+---
+- name: Base hardening for devops-lab
+  hosts: pi
+  become: true
+  roles:
+    - hardening
+
+- name: K3s cluster on devops-lab
+  hosts: pi
+  become: true
+  roles:
+    - k3s

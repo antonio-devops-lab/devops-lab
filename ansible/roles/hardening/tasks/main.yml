@@ -1,0 +1,8 @@
+---
+- name: SSH hardening
+  ansible.builtin.import_tasks: ssh.yml
+  tags: [ssh]
+
+- name: Firewall (ufw)
+  ansible.builtin.import_tasks: firewall.yml
+  tags: [firewall]

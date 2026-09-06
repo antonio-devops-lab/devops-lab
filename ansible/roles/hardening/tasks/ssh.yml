@@ -1,0 +1,21 @@
+---
+- name: Disable SSH password authentication (key-only access)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify: Reload sshd
+
+- name: Disable SSH root login
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify: Reload sshd
+
+- name: Flush handlers so sshd reload happens now
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify key-based SSH still works after reload
+  ansible.builtin.wait_for_connection:
+    timeout: 15

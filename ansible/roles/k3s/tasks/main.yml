@@ -1,0 +1,81 @@
+---
+- name: Check if k3s is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: Download k3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s-install.sh
+    mode: '0755'
+  when: not k3s_binary.stat.exists
+
+- name: Install k3s server (single-node, stable channel)
+  ansible.builtin.command: /tmp/k3s-install.sh
+  environment:
+    INSTALL_K3S_CHANNEL: stable
+    INSTALL_K3S_EXEC: "server --write-kubeconfig-mode 644"
+  when: not k3s_binary.stat.exists
+  changed_when: true
+
+- name: Ensure k3s service is enabled and running
+  ansible.builtin.systemd:
+    name: k3s
+    enabled: true
+    state: started
+
+- name: Wait for node to report Ready
+  ansible.builtin.command: k3s kubectl get nodes
+  register: k3s_node_status
+  until: "'Ready' in k3s_node_status.stdout"
+  retries: 12
+  delay: 5
+  changed_when: false
+
+- name: Read kubeconfig from the node
+  ansible.builtin.slurp:
+    src: /etc/rancher/k3s/k3s.yaml
+  register: k3s_kubeconfig_raw
+
+- name: Ensure local ~/.kube directory exists
+  become: false
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.kube"
+    state: directory
+    mode: '0700'
+
+- name: Write this cluster's kubeconfig to its own file (never the shared one directly)
+  become: false
+  delegate_to: localhost
+  ansible.builtin.copy:
+    content: "{{ (k3s_kubeconfig_raw.content | b64decode) | replace('127.0.0.1', ansible_host) | replace('default', 'devops-lab') }}"
+    dest: "{{ lookup('env', 'HOME') }}/.kube/devops-lab.yaml"
+    mode: '0600'
+
+- name: Ensure ~/.kube/config exists so it can be merged into
+  become: false
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.kube/config"
+    state: touch
+    mode: '0600'
+    modification_time: preserve
+    access_time: preserve
+
+- name: Merge devops-lab into ~/.kube/config, keeping any other clusters already there
+  become: false
+  delegate_to: localhost
+  ansible.builtin.shell: >
+    KUBECONFIG={{ lookup('env', 'HOME') }}/.kube/config:{{ lookup('env', 'HOME') }}/.kube/devops-lab.yaml
+    kubectl config view --flatten > {{ lookup('env', 'HOME') }}/.kube/config.tmp
+    && mv {{ lookup('env', 'HOME') }}/.kube/config.tmp {{ lookup('env', 'HOME') }}/.kube/config
+    && chmod 0600 {{ lookup('env', 'HOME') }}/.kube/config
+  changed_when: true
+
+- name: Make devops-lab the active context
+  become: false
+  delegate_to: localhost
+  ansible.builtin.command: kubectl config use-context devops-lab
+  changed_when: true

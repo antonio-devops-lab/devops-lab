@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-secret-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp-secret-test
+  template:
+    metadata:
+      labels:
+        app: myapp-secret-test
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "myapp"
+        vault.hashicorp.com/agent-inject-secret-config.txt: "secret/data/myapp/config"
+    spec:
+      serviceAccountName: myapp-sa
+      containers:
+        - name: app
+          image: nginx:stable
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

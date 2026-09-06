@@ -1,0 +1,19 @@
+---
+- name: Allow SSH through ufw (must happen before enabling ufw)
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Set ufw default deny incoming
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Set ufw default allow outgoing
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled

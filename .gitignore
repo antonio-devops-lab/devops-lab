@@ -1,0 +1,10 @@
+# Estado interno de herramientas, no es parte del proyecto
+.claude/
+.ansible/
+*.retry
+
+# Nunca deben versionarse credenciales/llaves si algún día aparecen aquí
+*.pem
+*.key
+id_rsa*
+.env
