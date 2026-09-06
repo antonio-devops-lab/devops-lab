@@ -11,11 +11,16 @@ se escribe al final, cuando el resto de las piezas del proyecto estén listas.
 - [`ansible/`](ansible/) — provisioning: hardening de SSH, cluster k3s.
 - [`k8s/`](k8s/) — manifiestos de prueba desplegados en el cluster (nginx,
   PostgreSQL con almacenamiento persistente, OpenBao con inyección de secretos).
-- [`docs/`](docs/) — runbooks: migración de microSD a SSD, estado de backups.
+- [`app/`](app/) + [`.github/workflows/`](.github/workflows/) — app propia y
+  pipeline de CI (build multi-arch amd64→arm64, push a ghcr.io).
+- [`argocd/`](argocd/) — GitOps: Argo CD sincroniza `k8s/apps/` solo, sin
+  intervención manual después del bootstrap.
+- [`docs/`](docs/) — runbooks: migración de microSD a SSD, estado de backups,
+  y la [guía completa paso a paso](docs/project-walkthrough.md) de todo el
+  proyecto (comandos exactos, de Ansible a GitOps).
 
 ## Pendiente
 
 - Firewall (ufw) vía Ansible.
-- Pipeline CI/CD (GitHub Actions + Argo CD).
 - Monitoreo (Prometheus + Grafana).
 - README final con diagrama de arquitectura.
