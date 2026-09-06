@@ -18,7 +18,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: app
-          image: ghcr.io/antonio-devops-lab/devops-lab-app:latest
+          image: ghcr.io/antonio-devops-lab/devops-lab-app:b38015078f711b4075bb75e7c8f36910a3655c4e
           ports:
             - containerPort: 8080
           resources:
